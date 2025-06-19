@@ -249,6 +249,7 @@ class HealthHomeScreen extends StatelessWidget {
                   _HealthCard(icon: Icons.water_drop, title: '혈당', value: '110', unit: 'mg/dL', sub: '2일 전', iconColor: Colors.red),
                   _HealthCard(icon: Icons.favorite, title: '혈압', value: '120/80', unit: 'mmHg', sub: '2일 전', iconColor: Colors.red),
                   _HealthCard(icon: Icons.medication, title: '복약', value: '-', unit: '', sub: '기록 없음', iconColor: Colors.green),
+                  _HealthCard(icon: Icons.monitor_heart, title: '심박수', value: '72', unit: 'bpm', sub: '예시 데이터', iconColor: Colors.purple),
                 ],
               ),
             ),
@@ -343,43 +344,87 @@ class AiChatPage extends StatefulWidget {
   State<AiChatPage> createState() => _AiChatPageState();
 }
 
+// 건강 데이터 모델
+class HealthData {
+  final double weight;
+  final int heartRate;
+  final int bloodSugar;
+  final String bloodPressure;
+
+  const HealthData({
+    required this.weight,
+    required this.heartRate,
+    required this.bloodSugar,
+    required this.bloodPressure,
+  });
+
+  String evaluateHeartRate() {
+    if (heartRate > 100) return "⚠️ 심박수가 너무 높습니다. 휴식이 필요합니다.";
+    if (heartRate < 60) return "⚠️ 심박수가 낮습니다. 필요한 경우 의사와 상담하세요.";
+    return "✅ 심박수는 정상 범위입니다.";
+  }
+
+  String evaluateBloodSugar() {
+    if (bloodSugar > 126) return "⚠️ 고혈당 상태입니다. 식이 조절과 운동이 필요합니다.";
+    if (bloodSugar < 70) return "⚠️ 저혈당 위험이 있습니다. 당분 섭취가 필요할 수 있습니다.";
+    return "✅ 혈당은 정상입니다.";
+  }
+
+  String recommendDiet() {
+    if (weight >= 80) return "🥗 체중이 높아 저칼로리 식단이 필요합니다.";
+    if (bloodSugar > 110) return "🍠 혈당을 낮추기 위한 저당 식단을 권장합니다.";
+    return "🍎 균형 잡힌 일반 식단을 유지하세요.";
+  }
+
+  String getOverallAdvice() {
+    return "${evaluateHeartRate()}\n${evaluateBloodSugar()}\n${recommendDiet()}";
+  }
+}
+
 class _AiChatPageState extends State<AiChatPage> {
   final List<Map<String, dynamic>> _messages = [
-    {"text": "무엇을 도와드릴까요?", "isUser": false},
+    {"text": "건강과 관련해 궁금한 것을 질문해 주세요.", "isUser": false},
   ];
   final TextEditingController _controller = TextEditingController();
 
+  final HealthData _healthData = const HealthData(
+    weight: 78.0,
+    heartRate: 88,
+    bloodSugar: 115,
+    bloodPressure: '120/80',
+  );
+
   void _sendMessage(String text) {
     if (text.trim().isEmpty) return;
+
+    String reply;
+    if (text.contains("심박수") || text.contains("심장")) {
+      reply = _healthData.evaluateHeartRate();
+    } else if (text.contains("혈당")) {
+      reply = _healthData.evaluateBloodSugar();
+    } else if (text.contains("체중") || text.contains("다이어트")) {
+      reply = _healthData.recommendDiet();
+    } else if (text.contains("전체") || text.contains("요약")) {
+      reply = _healthData.getOverallAdvice();
+    } else {
+      reply = "해당 건강 정보에 대해 더 구체적으로 질문해 주세요.";
+    }
+
     setState(() {
+      _messages.insert(0, {"text": reply, "isUser": false});
       _messages.insert(0, {"text": text, "isUser": true});
-      _messages.insert(0, {"text": "해당 증상에 대해 더 설명해 주세요.", "isUser": false});
     });
+
     _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("AI 챗봇")),
+      appBar: AppBar(title: const Text("AI 건강 상담")),
       body: Column(
         children: [
-          // 증상 선택 버튼 행
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              children: [
-                _buildChip("1. 소화기계"),
-                _buildChip("2. 피부"),
-                _buildChip("3. 호흡기"),
-                _buildChip("4. 기타"),
-              ],
-            ),
-          ),
           const Divider(height: 1),
-
-          // 채팅 메시지 영역
           Expanded(
             child: ListView.builder(
               reverse: true,
@@ -398,7 +443,8 @@ class _AiChatPageState extends State<AiChatPage> {
                         padding: const EdgeInsets.only(right: 8.0, top: 6),
                         child: CircleAvatar(
                           backgroundColor: Colors.grey[400],
-                          child: const Icon(Icons.smart_toy, color: Colors.white),
+                          child: const Icon(Icons.health_and_safety,
+                              color: Colors.white),
                         ),
                       ),
                     Flexible(
@@ -431,8 +477,6 @@ class _AiChatPageState extends State<AiChatPage> {
               },
             ),
           ),
-
-          // 입력창
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
@@ -443,10 +487,10 @@ class _AiChatPageState extends State<AiChatPage> {
                       controller: _controller,
                       onSubmitted: _sendMessage,
                       decoration: const InputDecoration(
-                        hintText: "메시지를 입력하세요",
+                        hintText: "건강 관련 질문을 입력하세요",
                         border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                       ),
                     ),
                   ),
@@ -463,24 +507,8 @@ class _AiChatPageState extends State<AiChatPage> {
       ),
     );
   }
-
-  Widget _buildChip(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: ElevatedButton(
-        onPressed: () {
-          _sendMessage(label);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.redAccent,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        ),
-        child: Text(label, style: const TextStyle(fontSize: 13)),
-      ),
-    );
-  }
 }
+
 
 
 
