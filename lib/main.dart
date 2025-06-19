@@ -170,12 +170,12 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
 
   final List<Widget> _pages = [
+    const AiChatPage(),
     const HealthHomeScreen(),
-    const Center(child: Text('AI 챗봇 화면입니다', style: TextStyle(fontSize: 24))),
-    const Center(child: Text('더보기 화면입니다', style: TextStyle(fontSize: 24))),
+    const MorePage(),
   ];
 
   void _onTap(int index) {
@@ -195,12 +195,12 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '홈',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.smart_toy),
             label: 'AI 챗봇',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: '홈',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.more_horiz),
@@ -243,12 +243,12 @@ class HealthHomeScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
-                childAspectRatio: 3 / 2.6, // 높이를 늘려 카드 내부 공간 확보
-                children: [
-                  _HealthCard(title: '체중', value: '78.0 kg', sub: '2일 전'),
-                  _HealthCard(title: '혈당', value: '110 mg/dL', sub: '2일 전'),
-                  _HealthCard(title: '혈압', value: '120/80 mmHg', sub: '2일 전'),
-                  _HealthCard(title: '복약', value: '-', sub: '기록 없음'),
+                childAspectRatio: 3 / 3.2,
+                children: const [
+                  _HealthCard(icon: Icons.monitor_weight, title: '체중', value: '78.0', unit: 'kg', sub: '2일 전', iconColor: Colors.blue),
+                  _HealthCard(icon: Icons.water_drop, title: '혈당', value: '110', unit: 'mg/dL', sub: '2일 전', iconColor: Colors.red),
+                  _HealthCard(icon: Icons.favorite, title: '혈압', value: '120/80', unit: 'mmHg', sub: '2일 전', iconColor: Colors.red),
+                  _HealthCard(icon: Icons.medication, title: '복약', value: '-', unit: '', sub: '기록 없음', iconColor: Colors.green),
                 ],
               ),
             ),
@@ -260,14 +260,20 @@ class HealthHomeScreen extends StatelessWidget {
 }
 
 class _HealthCard extends StatelessWidget {
+  final IconData icon;
   final String title;
   final String value;
+  final String unit;
   final String sub;
+  final Color iconColor;
 
   const _HealthCard({
+    required this.icon,
     required this.title,
     required this.value,
+    required this.unit,
     required this.sub,
+    required this.iconColor,
   });
 
   @override
@@ -288,26 +294,40 @@ class _HealthCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  Icon(icon, size: 20, color: iconColor),
+                  const SizedBox(width: 6),
+                  Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(unit, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ),
+                ],
+              ),
               const SizedBox(height: 6),
-              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 4),
-              Text(sub, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(sub, style: const TextStyle(fontSize: 11, color: Colors.grey)),
             ],
           ),
           Align(
             alignment: Alignment.bottomRight,
             child: ElevatedButton(
-              onPressed: () {
-                // TODO: 데이터 입력 화면으로 이동
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 shape: const CircleBorder(),
                 backgroundColor: Colors.red[300],
                 padding: const EdgeInsets.all(10),
-                minimumSize: const Size(44, 44),
+                minimumSize: const Size(40, 40),
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 20),
+              child: const Icon(Icons.add, color: Colors.white, size: 18),
             ),
           ),
         ],
@@ -315,3 +335,323 @@ class _HealthCard extends StatelessWidget {
     );
   }
 }
+
+class AiChatPage extends StatefulWidget {
+  const AiChatPage({super.key});
+
+  @override
+  State<AiChatPage> createState() => _AiChatPageState();
+}
+
+class _AiChatPageState extends State<AiChatPage> {
+  final List<Map<String, dynamic>> _messages = [
+    {"text": "무엇을 도와드릴까요?", "isUser": false},
+  ];
+  final TextEditingController _controller = TextEditingController();
+
+  void _sendMessage(String text) {
+    if (text.trim().isEmpty) return;
+    setState(() {
+      _messages.insert(0, {"text": text, "isUser": true});
+      _messages.insert(0, {"text": "해당 증상에 대해 더 설명해 주세요.", "isUser": false});
+    });
+    _controller.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("AI 챗봇")),
+      body: Column(
+        children: [
+          // 증상 선택 버튼 행
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Row(
+              children: [
+                _buildChip("1. 소화기계"),
+                _buildChip("2. 피부"),
+                _buildChip("3. 호흡기"),
+                _buildChip("4. 기타"),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // 채팅 메시지 영역
+          Expanded(
+            child: ListView.builder(
+              reverse: true,
+              padding: const EdgeInsets.all(12),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                return Row(
+                  mainAxisAlignment: msg['isUser']
+                      ? MainAxisAlignment.end
+                      : MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!msg['isUser'])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0, top: 6),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.grey[400],
+                          child: const Icon(Icons.smart_toy, color: Colors.white),
+                        ),
+                      ),
+                    Flexible(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: msg['isUser']
+                              ? Colors.red[100]
+                              : Colors.grey[300],
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(16),
+                            topRight: const Radius.circular(16),
+                            bottomLeft: msg['isUser']
+                                ? const Radius.circular(16)
+                                : const Radius.circular(0),
+                            bottomRight: msg['isUser']
+                                ? const Radius.circular(0)
+                                : const Radius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          msg['text'],
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+
+          // 입력창
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      onSubmitted: _sendMessage,
+                      decoration: const InputDecoration(
+                        hintText: "메시지를 입력하세요",
+                        border: OutlineInputBorder(),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.send, color: Colors.red),
+                    onPressed: () => _sendMessage(_controller.text),
+                  )
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChip(String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: ElevatedButton(
+        onPressed: () {
+          _sendMessage(label);
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.redAccent,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 13)),
+      ),
+    );
+  }
+}
+
+
+
+
+class MorePage extends StatelessWidget {
+  const MorePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        toolbarHeight: 0, // 상단을 완전히 흰 배경으로 고정
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '박경민 님',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.settings, color: Colors.grey),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _MenuIcon(title: '내정보', icon: Icons.person, color: Colors.blueAccent),
+                      _MenuIcon(title: '가족 정보', icon: Icons.favorite, color: Colors.pinkAccent),
+                      _MenuIcon(title: '고객센터', icon: Icons.headset_mic, color: Colors.orangeAccent),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(color: Colors.grey[300], thickness: 1),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            _SectionTitle('건강 체크'),
+            _GridMenu(items: const [
+              '혈당 기록', '혈압 기록',
+              '복약 기록', '체중 기록',
+            ]),
+            const SizedBox(height: 20),
+            _SectionTitle('내 진료 차트'),
+            _GridMenu(items: const [
+              '건강검진 결과', '혈액검사 결과',
+              '사진으로 기록', '내원 기록',
+            ]),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuIcon extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+
+  const _MenuIcon({required this.title, required this.icon, this.color = Colors.blueGrey});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: color.withOpacity(0.1),
+          child: Icon(icon, color: color),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GridMenu extends StatelessWidget {
+  final List<String> items;
+
+  const _GridMenu({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        childAspectRatio: 4,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        children: items.map((e) => _GridMenuItem(title: e)).toList(),
+      ),
+    );
+  }
+}
+
+class _GridMenuItem extends StatelessWidget {
+  final String title;
+
+  const _GridMenuItem({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 14),
+      ),
+    );
+  }
+}
+
