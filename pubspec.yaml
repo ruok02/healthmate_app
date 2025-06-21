@@ -31,3 +31,7 @@ flutter:
   assets:
     - assets/icons/healthmate_icon.png
     - assets/icons/home_healthmate_icon.png
+    - assets/icons/kakao_icon.png
+    - assets/icons/naver_icon.png
+
+    

@@ -121,6 +121,50 @@ class LoginScreen extends StatelessWidget {
                       child: Text('로그인', style: TextStyle(fontSize: 18)),
                     ),
                   ),
+                  // 로그인 버튼 아래 추가
+const SizedBox(height: 24),
+Row(
+  children: const [
+    Expanded(child: Divider()),
+    Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
+      child: Text('또는'),
+    ),
+    Expanded(child: Divider()),
+  ],
+),
+const SizedBox(height: 24),
+Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    GestureDetector(
+      onTap: () {
+        // 카카오 로그인 처리
+      },
+      child: Column(
+        children: [
+          Image.asset('assets/kakao_icon.png', width: 48),
+          const SizedBox(height: 4),
+          const Text('카카오'),
+        ],
+      ),
+    ),
+    const SizedBox(width: 40),
+    GestureDetector(
+      onTap: () {
+        // 네이버 로그인 처리
+      },
+      child: Column(
+        children: [
+          Image.asset('assets/naver_icon.png', width: 48),
+          const SizedBox(height: 4),
+          const Text('네이버'),
+        ],
+      ),
+    ),
+  ],
+),
+
                 ],
               ),
             ),
